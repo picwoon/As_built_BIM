@@ -6,18 +6,21 @@ from utils3d.geometric_util import limit_period, vertical_dis_1point_lines, \
 from data3d.render_tools import show_walls_offsetz, show_walls_1by1
 from second.core.non_max_suppression.nms_gpu import rotate_iou_gpu, rotate_iou_gpu_eval
 
+
 MERGE_Z_ANYWAY_XYIOU_THRESHOLD = 0.75
 DEBUG = True
 
-def preprocess_walls_multy_levels(wall_bboxes):
+def preprocess_walls_multy_levels(wall_bboxes,pc_points):
   show_pro = 0
   if DEBUG and show_pro:
     print('original')
     # show_walls_offsetz(wall_bboxes)
     # Bbox3D.draw_bboxes_mesh(wall_bboxes, 'Z', False)
     # Bbox3D.draw_bboxes(wall_bboxes, 'Z', False)
-  if DEBUG and 0:
-    Bbox3D.draw_bboxes(wall_bboxes, 'Z', False)
+  if DEBUG and 1:
+
+    # Bbox3D.draw_bboxes(wall_bboxes, 'Z', False)
+    Bbox3D.draw_points_bboxes(pc_points,wall_bboxes,'Z',False)
   #wall_bboxes = Bbox3D.define_walls_direction(wall_bboxes, 'Z', yx_zb=False, check_thickness=True)
 
   wall_bboxes = merge_pieces_of_same_walls_alongY(wall_bboxes)

@@ -32,8 +32,8 @@ SAGE = True
 
 ONLY_LEVEL_1 = True
 
-#SUNCG_V1_DIR = '/home/wenjing/DATA/SUNCG/suncg_v1'
-SUNCG_V1_DIR = '/home/wenjing/DATA/SUNCG/suncg_v1'
+SUNCG_V1_DIR = '/home/wenjing/scan_to_BIM/suncg_v1'
+# SUNCG_V1_DIR = '/media/wenjing/Plus/suncg_v1'
 PARSED_DIR_GOING = '_parsed__'
 PARSED_DIR_READY = 'parsed'
 #PARSED_PATH = f'{SUNCG_V1_DIR}/{PARSED_DIR_GOING}'
@@ -401,19 +401,19 @@ class Suncg():
     house_fns.sort()
     temp = house_fns[2]
     print(temp)
-    self.house_fns = house_fns[6:7]
+    self.house_fns = house_fns[930:2000]
     #if SAGE:
     #  #self.house_fns =house_fns[5000: 7000]
     #  self.house_fns = house_fns[7000: 9000]
     #else:
-    #  self.house_fns = house_fns[4460:5000]
+    #  self.house_fns = house_fns[4460:5000]s
 
     if Debug and 0:
-      scene_id = '1d84d7ca97f9e05534bf408779406e30'
-      scene_id = '00e030e0e9198a0f9dd5389f2d2e9271'
+      # scene_id = '1d84d7ca97f9e05534bf408779406e30'
+      scene_id = '0371e4732e0426838c9f6ab2306ee537'
       self.house_fns = [f'{SUNCG_V1_DIR}/house/{scene_id}/house.json']
 
-      self.house_fns = [f'{SUNCG_V1_DIR}/house/{scene_id}/house.json' for scene_id in SceneSamples.complex_structures]
+      # self.house_fns = [f'{SUNCG_V1_DIR}/house/{scene_id}/house.json' for scene_id in SceneSamples.complex_structures]
 
     #self.house_fns = rm_bad_scenes(self.house_fns)
 
@@ -421,7 +421,7 @@ class Suncg():
 
   def parse_houses_pool(self):
     import multiprocessing as mp
-    threads = 8 if SAGE else 8
+    threads = 14 if SAGE else 14
     p = mp.Pool(processes=threads)
     p.map(parse_house_onef, self.house_fns)
     p.close()
@@ -458,7 +458,7 @@ def parse_house_onef( house_fn, find_fail_scene=False ):
     is_gen_bbox = 1
     is_gen_cam = 1 - find_fail_scene
     is_gen_pcl = 1 - find_fail_scene
-    if Debug and 1:
+    if Debug and 0:
       is_gen_pcl = 0
       is_gen_cam = 0
       pass
@@ -474,8 +474,8 @@ def parse_house_onef( house_fn, find_fail_scene=False ):
 
     parsed_dir = get_pcl_path(house_fn)
     summary = read_summary(parsed_dir)
-    #if ONLY_LEVEL_1 and 'level_num' in summary and summary['level_num'] != 1:
-      #return
+    # if ONLY_LEVEL_1 and 'level_num' in summary and summary['level_num'] != 1:
+    #   return
 
     if is_gen_cam:
       gen_cam_images(house_fn)
@@ -629,12 +629,7 @@ def gen_bbox(house_fn):
       bboxes['floor_raw'] = bboxes['floor'].copy()
       bboxes['ceiling'] = preprocess_cfr(bboxes['ceiling'], bboxes['wall'], 'ceiling')
       bboxes['floor'] = preprocess_cfr(bboxes['floor'], bboxes['wall'], 'floor')
-      #import pdb;
-      #pdb.set_trace()  # XXX BREAKPOINT
-      #if level_num == 2 and Debug:
-        #bboxes['wall'] = preprocess_walls(bboxes['wall'])
-        #bboxes['window'] = preprocess_windows(bboxes['window'], bboxes['wall'])
-        #bboxes['door'] = preprocess_doors(bboxes['door'], bboxes['wall'])
+  
       if bboxes['wall'].shape[0]:
         aa.append(bboxes['wall'][:])
       else:
@@ -655,10 +650,6 @@ def gen_bbox(house_fn):
         ee.append(bboxes['floor'][:])
       else:
         ee.append(np.empty((0,7),dtype=np.float64))
-        #import pdb;
-        #pdb.set_trace()  # XXX BREAKPOINT
-        #pass
-      #print(bboxes['wall'].shape)
 
       # save bbox in ply and txt
       object_bbox_dir = os.path.join(parsed_dir, 'object_bbox')
@@ -682,6 +673,7 @@ def gen_bbox(house_fn):
       save_ply = False
       if save_ply:
         for category in bboxes.keys():
+          #Bbox3D.save_bboxes_ply()
           for i, bbox in enumerate(bboxes[category]):
             box_dir = os.path.join(object_bbox_dir, '{}'.format(category))
             if not os.path.exists(box_dir):
@@ -689,30 +681,58 @@ def gen_bbox(house_fn):
 
             box_fn = os.path.join(box_dir, '%d.ply' % (i))
             bbox_cam = world2cam_box(bbox.reshape([1, 7]))[0]
-            Bbox3D.draw_bbox_open3d(bbox_cam, 'Y', plyfn=box_fn)
+            Bbox3D.save_bboxes_ply(box_fn,bbox_cam,'Y')
+            #Bbox3D.draw_bbox_open3d(bbox_cam, 'Y', plyfn=box_fn)
 
     #print(wall_bboxes)
+    # abs_root = '/home/wenjing/scan_to_BIM/suncg_v1/_parsed__/00052c0562bde7790f8354e6123ae7ff'
+    # pcd_fn = os.path.join(abs_root,'pcl_camref.ply')
+    # pcd = open3d.io.read_point_cloud(pcd_fn)
+    # pcd = pcd.voxel_down_sample(voxel_size=0.05)
+    # pcd_points = np.asarray(pcd.points)
+    # pcd_colors = np.asarray(pcd.colors)
+    # pcd_numpy = np.concatenate((pcd_points,pcd_colors),1)
+    # pcd_numpy[:,[1,2]] = pcd_numpy[:,[2,1]]
+    # pcd_numpy[:,1] = -pcd_numpy[:,1]
+    # Bbox3D.draw_points_open3d(pcd_numpy,show=True)
     level_num = len(house['levels'])
     if level_num == 1 and Debug:
-      preprocess_windows_multy_levels(bboxes['wall'],bboxes['window'],bboxes['door'],bboxes['ceiling'],bboxes['floor'])
+      wall_bboxes = aa[0]
+      window_bboxes = bb[0]
+      door_bboxes = cc[0]
+      ceiling_bboxes = dd[0]
+      floor_bboxes = ee[0]
+      # preprocess_walls_multy_levels(bboxes['wall'],pcd_numpy)
+      # preprocess_windows_multy_levels(bboxes['wall'],bboxes['window'],bboxes['door'],bboxes['ceiling'],bboxes['floor'])
 
     if level_num > 1 and Debug:
       wall_bboxes = np.concatenate((aa[0], aa[1]))
       window_bboxes = np.concatenate((bb[0], bb[1]))
       door_bboxes = np.concatenate((cc[0], cc[1]))
-      celing_bboxes = np.concatenate((dd[0],dd[1]))
+      ceiling_bboxes = np.concatenate((dd[0],dd[1]))
       floor_bboxes = np.concatenate((ee[0],ee[1]))
       if len(aa) > 2:
         for i in range(len(aa)-2):
           wall_bboxes = np.concatenate((wall_bboxes,aa[i+2]))
           window_bboxes = np.concatenate((window_bboxes, bb[i+2]))
           door_bboxes = np.concatenate((door_bboxes, cc[i+2]))
-          celing_bboxes = np.concatenate((celing_bboxes,dd[i+2]))
+          ceiling_bboxes = np.concatenate((ceiling_bboxes,dd[i+2]))
           floor_bboxes = np.concatenate((floor_bboxes,ee[i+2]))
       #preprocess_walls_multy_levels(wall_bboxes)
-      preprocess_windows_multy_levels(wall_bboxes,window_bboxes,door_bboxes,celing_bboxes,floor_bboxes)
+      # preprocess_windows_multy_levels(wall_bboxes,window_bboxes,door_bboxes,celing_bboxes,floor_bboxes)
+      # preprocess_walls_multy_levels(wall_bboxes, pcd_points)
       #preprocess_doors_multy_levels(door_bboxes,wall_bboxes)
-
+    ### save .txt files for multy_levels
+    wall_fn = os.path.join(object_bbox_dir,'wall.txt')
+    window_fn = os.path.join(object_bbox_dir,'window.txt')
+    door_fn = os.path.join(object_bbox_dir,'door.txt')
+    floor_fn = os.path.join(object_bbox_dir,'floor.txt')
+    ceiling_fn = os.path.join(object_bbox_dir,'ceiling.txt')
+    np.savetxt(wall_fn,wall_bboxes)
+    np.savetxt(window_fn,window_bboxes)
+    np.savetxt(door_fn,door_bboxes)
+    np.savetxt(floor_fn,floor_bboxes)
+    np.savetxt(ceiling_fn,ceiling_bboxes)
 
 def split_room_parts(house_fn, modelId):
     tmp = house_fn.split('/')
@@ -1250,9 +1270,14 @@ def parse_house():
     cam, cam_org, cam_org_pos.ply, cam_pos.ply, pcl_camref in cam frame
     object_bbox in world frame
   '''
+  import time
+
+  time_start = time.time()
   suncg = Suncg(SUNCG_V1_DIR)
-  #suncg.parse_houses_pool()
-  suncg.parse_houses(False)
+  suncg.parse_houses_pool()
+  # suncg.parse_houses(False)
+  time_end = time.time()
+  print('time cost', time_end - time_start, 's')
 
 if __name__ == '__main__':
   parse_house()
